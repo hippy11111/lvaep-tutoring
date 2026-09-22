@@ -9,6 +9,7 @@ import { AchievementList } from "@/components/achievements";
 import { deleteSession, resumeTutoring, stopTutoring } from "@/app/actions";
 import { AssignmentForm } from "@/components/assignment-form";
 import { ScheduleForm } from "@/components/schedule-form";
+import { StudentStatus } from "@/components/status-badge";
 
 export default async function StudentPage({
   params,
@@ -69,7 +70,10 @@ export default async function StudentPage({
       </Link>
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">{student.name}</h1>
+          <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold">
+            {student.name}
+            <StudentStatus unassigned={!assignment} stopped={Boolean(student.stoppedAt)} />
+          </h1>
           <p className="text-sm text-muted">
             Tutor: {assignment?.tutor.name ?? "Unassigned"} · {student.site}
           </p>
@@ -88,7 +92,7 @@ export default async function StudentPage({
       </div>
 
       {student.stoppedAt ? (
-        <Card className="mt-6 border-accent">
+        <Card className="mt-6 border-stopped">
           <p className="font-medium">Tutoring stopped</p>
           <p className="text-sm text-muted">
             {formatDate(student.stoppedAt)}

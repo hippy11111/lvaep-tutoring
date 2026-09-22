@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Shell, Card } from "@/components/shell";
 import { AssignmentForm } from "@/components/assignment-form";
 import { NewStudentForm } from "@/components/new-student-form";
+import { StudentStatus } from "@/components/status-badge";
 
 export default async function StaffHome({
   searchParams,
@@ -27,6 +28,16 @@ export default async function StaffHome({
       orderBy: { name: "asc" },
     }),
   ]);
+
+  const unassignedCount = roster.filter((student) => student.assignments.length === 0).length;
+  const currentlyStoppedCount = roster.filter((student) => student.stoppedAt).length;
+  const needsAttention = [
+    ...roster.filter((student) => student.assignments.length === 0),
+    ...roster.filter((student) => student.assignments.length > 0 && student.stoppedAt),
+  ];
+  const activeAssigned = roster.filter(
+    (student) => student.assignments.length > 0 && !student.stoppedAt,
+  );
 
   if (!report) {
     return (
@@ -70,11 +81,11 @@ export default async function StaffHome({
 
       <p className="mt-2 text-sm font-medium">{formatMonthLabel(month)}</p>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-4">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Hours tutored" value={report.totals.hours.toFixed(1)} />
         <Stat label="Sessions held" value={String(report.totals.sessionsHeld)} />
-        <Stat label="New achievements" value={String(report.totals.newAchievements)} />
-        <Stat label="Students stopped" value={String(report.totals.stopped)} />
+        <Stat label="Unassigned" value={String(unassignedCount)} />
+        <Stat label="Currently stopped" value={String(currentlyStoppedCount)} />
       </div>
 
       <Card className="mt-8 overflow-x-auto">
@@ -114,17 +125,31 @@ export default async function StaffHome({
             </tr>
           </thead>
           <tbody>
-            {report.byStudent.map((row) => (
-              <tr key={row.studentId} className="border-t border-line">
+            {report.byStudent.map((row) => {
+              const unassigned = !row.tutorId;
+              return (
+              <tr
+                key={row.studentId}
+                className={`border-t border-line ${
+                  row.currentlyStopped
+                    ? "bg-stopped/[0.06]"
+                    : unassigned
+                      ? "bg-waitlist/[0.08]"
+                      : ""
+                }`}
+              >
                 <td className="py-2">
-                  <Link href={`/students/${row.studentId}`} className="underline decoration-line">
-                    {row.studentName}
-                  </Link>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/students/${row.studentId}`} className="underline decoration-line">
+                      {row.studentName}
+                    </Link>
+                    <StudentStatus unassigned={unassigned} stopped={row.currentlyStopped} />
+                  </div>
                   {row.stopped ? (
-                    <span className="ml-2 text-xs text-muted">stopped</span>
+                    <div className="text-xs text-muted">Stopped this month</div>
                   ) : null}
                 </td>
-                <td>{row.tutorName}</td>
+                <td>{unassigned ? "—" : row.tutorName}</td>
                 <td>{row.hours.toFixed(1)}</td>
                 <td>
                   {row.studentAbsent} / {row.tutorAbsent} / {row.holidays}
@@ -133,7 +158,8 @@ export default async function StaffHome({
                   {row.newAchievements.length ? row.newAchievements.join(", ") : "—"}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </Card>
@@ -150,37 +176,35 @@ export default async function StaffHome({
       </Card>
 
       <Card className="mt-6">
-        <h2 className="text-lg font-semibold">Assignments</h2>
+        <h2 className="text-lg font-semibold">Needs attention</h2>
+        <p className="mt-1 text-sm text-muted">
+          Waitlist (no tutor) and students whose tutoring has been stopped.
+        </p>
+        {needsAttention.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">None right now.</p>
+        ) : (
+          <ul className="mt-3 grid gap-3 text-sm">
+            {needsAttention.map((student) => (
+              <AssignmentRow key={student.id} student={student} tutors={tutors} highlight />
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card className="mt-6">
+        <h2 className="text-lg font-semibold">Active assignments</h2>
         <p className="mt-1 text-sm text-muted">
           Staff assign and transfer students. Tutors cannot change who they work with.
         </p>
-        <ul className="mt-3 grid gap-3 text-sm">
-          {roster.map((student) => {
-            const assignment = student.assignments[0];
-            return (
-              <li
-                key={student.id}
-                className="flex flex-col gap-2 border-b border-line py-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <Link href={`/students/${student.id}`} className="font-medium underline decoration-line">
-                    {student.name}
-                  </Link>
-                  <div className="text-muted">
-                    {student.site}
-                    {student.stoppedAt ? " · stopped" : ""}
-                    {!assignment ? " · unassigned" : ""}
-                  </div>
-                </div>
-                <AssignmentForm
-                  studentId={student.id}
-                  tutors={tutors}
-                  currentTutorId={assignment?.tutorId ?? null}
-                />
-              </li>
-            );
-          })}
-        </ul>
+        {activeAssigned.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">No active assigned students.</p>
+        ) : (
+          <ul className="mt-3 grid gap-3 text-sm">
+            {activeAssigned.map((student) => (
+              <AssignmentRow key={student.id} student={student} tutors={tutors} />
+            ))}
+          </ul>
+        )}
       </Card>
     </Shell>
   );
@@ -192,5 +216,51 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="text-xs uppercase tracking-wide text-muted">{label}</div>
       <div className="mt-1 text-2xl font-semibold">{value}</div>
     </Card>
+  );
+}
+
+function AssignmentRow({
+  student,
+  tutors,
+  highlight = false,
+}: {
+  student: {
+    id: string;
+    name: string;
+    site: string;
+    stoppedAt: Date | null;
+    assignments: { tutorId: string }[];
+  };
+  tutors: { id: string; name: string }[];
+  highlight?: boolean;
+}) {
+  const assignment = student.assignments[0];
+  const unassigned = !assignment;
+  const stopped = Boolean(student.stoppedAt);
+  return (
+    <li
+      className={`flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between ${
+        highlight
+          ? stopped
+            ? "rounded-lg border border-stopped/30 bg-stopped/[0.06]"
+            : "rounded-lg border border-waitlist/30 bg-waitlist/[0.08]"
+          : "border-b border-line"
+      }`}
+    >
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/students/${student.id}`} className="font-medium underline decoration-line">
+            {student.name}
+          </Link>
+          <StudentStatus unassigned={unassigned} stopped={stopped} />
+        </div>
+        <div className="text-muted">{student.site}</div>
+      </div>
+      <AssignmentForm
+        studentId={student.id}
+        tutors={tutors}
+        currentTutorId={assignment?.tutorId ?? null}
+      />
+    </li>
   );
 }

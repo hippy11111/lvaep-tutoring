@@ -5,6 +5,7 @@ import { getMonthlyReport } from "@/lib/reports";
 import { prisma } from "@/lib/prisma";
 import { Shell, Card } from "@/components/shell";
 import { AssignmentForm } from "@/components/assignment-form";
+import { NewStudentForm } from "@/components/new-student-form";
 
 export default async function StaffHome({
   searchParams,
@@ -135,6 +136,17 @@ export default async function StaffHome({
             ))}
           </tbody>
         </table>
+      </Card>
+
+      <Card className="mt-6">
+        <h2 className="text-lg font-semibold">Add a student</h2>
+        <p className="mt-1 text-sm text-muted">
+          Staff enroll students. Meeting days, times, and location are filled in by the assigned
+          tutor.
+        </p>
+        <div className="mt-3">
+          <NewStudentForm tutors={tutors} />
+        </div>
       </Card>
 
       <Card className="mt-6">

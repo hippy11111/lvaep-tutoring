@@ -30,8 +30,9 @@ async function requireAssignedTutor(studentId: string) {
   if (user.role !== "TUTOR") redirect("/staff");
   const assignment = await prisma.assignment.findFirst({
     where: { studentId, tutorId: user.id },
+    include: { student: true },
   });
-  if (!assignment) redirect("/tutor");
+  if (!assignment || assignment.student.stoppedAt) redirect("/tutor");
   return user;
 }
 
@@ -71,9 +72,16 @@ export async function logSession(formData: FormData) {
 
 export async function deleteSession(sessionId: string) {
   const user = await requireUser();
-  const session = await prisma.session.findUnique({ where: { id: sessionId } });
+  const session = await prisma.session.findUnique({
+    where: { id: sessionId },
+    include: { student: true },
+  });
   if (!session) return;
-  if (user.role !== "STAFF" && session.tutorId !== user.id) return;
+  if (user.role === "STAFF") {
+    // staff can always correct records
+  } else if (session.tutorId !== user.id || session.student.stoppedAt) {
+    return;
+  }
 
   await prisma.session.delete({ where: { id: sessionId } });
   revalidatePath("/tutor");
@@ -120,6 +128,19 @@ export async function stopTutoring(formData: FormData) {
   revalidatePath(`/students/${studentId}`);
   revalidatePath("/staff");
   revalidatePath("/tutor");
+  redirect("/tutor");
+}
+
+export async function resumeTutoring(studentId: string) {
+  await requireRole("STAFF");
+  await prisma.student.update({
+    where: { id: studentId },
+    data: { stoppedAt: null, stoppedReason: null },
+  });
+
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath("/staff");
+  revalidatePath("/tutor");
 }
 
 export async function setStudentAssignment(formData: FormData) {
@@ -149,4 +170,55 @@ export async function setStudentAssignment(formData: FormData) {
   revalidatePath("/staff");
   revalidatePath(`/students/${studentId}`);
   revalidatePath("/tutor");
+}
+
+export async function createStudent(formData: FormData) {
+  await requireRole("STAFF");
+
+  const name = String(formData.get("name") ?? "").trim();
+  const site = String(formData.get("site") ?? "").trim();
+  const tutorId = String(formData.get("tutorId") ?? "");
+  if (!name) return;
+
+  const student = await prisma.student.create({
+    data: {
+      name,
+      site: site || "To be scheduled",
+      days: "To be scheduled",
+      times: "To be scheduled",
+    },
+  });
+
+  if (tutorId) {
+    const tutor = await prisma.user.findFirst({
+      where: { id: tutorId, role: "TUTOR" },
+    });
+    if (tutor) {
+      await prisma.assignment.create({
+        data: { studentId: student.id, tutorId: tutor.id },
+      });
+    }
+  }
+
+  revalidatePath("/staff");
+  revalidatePath("/tutor");
+  redirect(`/students/${student.id}`);
+}
+
+export async function updateStudentSchedule(formData: FormData) {
+  const studentId = String(formData.get("studentId") ?? "");
+  const site = String(formData.get("site") ?? "").trim();
+  const days = String(formData.get("days") ?? "").trim();
+  const times = String(formData.get("times") ?? "").trim();
+  await requireAssignedTutor(studentId);
+  if (!site || !days || !times) return;
+
+  await prisma.student.update({
+    where: { id: studentId },
+    data: { site, days, times },
+  });
+
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath("/tutor");
+  revalidatePath("/staff");
 }

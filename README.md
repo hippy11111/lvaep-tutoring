@@ -37,8 +37,8 @@ Open [http://localhost:3000](http://localhost:3000) and pick a seeded staff or t
 
 ## What to try
 
-1. Log in as **Maria Alvarez** (tutor). Log a session for Luis, mark an achievement. Only assigned tutors can mark achievements or stop tutoring.
-2. Switch user → **Sydnay Eckerling** (staff). Choose **August 2026** or **September 2026**. Assign waitlist student **Rosa Alvarez**, or transfer someone to another tutor. Download CSV.
+1. Log in as **Sydnay Eckerling** (staff). Add a student or assign waitlist student **Rosa Alvarez**.
+2. Switch user → **Maria Alvarez** (tutor). Open a student, set site/days/times, log a session, mark an achievement. Choose **August 2026** or **September 2026** as staff to see seeded hours.
 
 ## Design decisions
 
@@ -53,14 +53,15 @@ This app stores **one row per session** (`date`, `student`, `tutor`, `hours` or 
 | Achievement checkmarks | Checklist on the student page, timestamped |
 | STOPPED + reason | Assigned tutor stops tutoring + reason; appears on that month’s report |
 | Staff collect forms | Staff dashboard + CSV |
-| Office matches tutors to students | Staff assign / transfer / unassign |
+| Office matches tutors to students | Staff add students and assign / transfer / unassign |
+| Tutoring site, days, times | Assigned tutor sets schedule per student |
 
 ## Assumptions
 
 - Tutors record after each meeting, not on a yearly grid.
 - One active tutor per student (or unassigned on a waitlist).
-- Only the assigned tutor can log sessions, mark achievements, or stop tutoring.
-- Staff assign, transfer, and unassign students; they cannot edit achievements or stop tutoring.
+- Stopped students leave the tutor’s roster and cannot have attendance edited by that tutor until staff resume tutoring.
+- Staff add students and assign, transfer, and unassign them; they cannot edit achievements, schedules, or stop tutoring.
 - Hours can be fractional (e.g. 1.5). Completed homework can be included in hours, as the paper form asked.
 - Starred goals are NRS-style outcomes; stored like other goals and labeled with `*`.
 - Fiscal year is July–June.

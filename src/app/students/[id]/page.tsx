@@ -6,8 +6,9 @@ import { fiscalYearRange, formatDate, monthKey } from "@/lib/dates";
 import { Shell, Card } from "@/components/shell";
 import { SessionForm } from "@/components/session-form";
 import { AchievementList } from "@/components/achievements";
-import { deleteSession, stopTutoring } from "@/app/actions";
+import { deleteSession, resumeTutoring, stopTutoring } from "@/app/actions";
 import { AssignmentForm } from "@/components/assignment-form";
+import { ScheduleForm } from "@/components/schedule-form";
 
 export default async function StudentPage({
   params,
@@ -29,8 +30,10 @@ export default async function StudentPage({
   if (!student) notFound();
 
   const assignment = student.assignments[0];
-  if (user.role === "TUTOR" && assignment?.tutorId !== user.id) {
-    redirect("/tutor");
+  if (user.role === "TUTOR") {
+    if (assignment?.tutorId !== user.id || student.stoppedAt) {
+      redirect("/tutor");
+    }
   }
 
   const tutors =
@@ -91,6 +94,32 @@ export default async function StudentPage({
             {formatDate(student.stoppedAt)}
             {student.stoppedReason ? ` — ${student.stoppedReason}` : ""}
           </p>
+          {user.role === "STAFF" ? (
+            <form action={resumeTutoring.bind(null, student.id)} className="mt-3">
+              <button
+                type="submit"
+                className="rounded-md bg-accent px-3 py-2 text-sm text-white hover:bg-accent-dark"
+              >
+                Resume tutoring
+              </button>
+            </form>
+          ) : null}
+        </Card>
+      ) : null}
+
+      {user.role === "TUTOR" && !student.stoppedAt ? (
+        <Card className="mt-6">
+          <h2 className="mb-3 text-lg font-semibold">Meeting schedule</h2>
+          <p className="mb-3 text-sm text-muted">
+            Set the usual tutoring site, days, and times for this student (the paper form’s Tutoring
+            Site / Day(s) / Time(s) fields).
+          </p>
+          <ScheduleForm
+            studentId={student.id}
+            site={student.site === "To be scheduled" ? "" : student.site}
+            days={student.days === "To be scheduled" ? "" : student.days}
+            times={student.times === "To be scheduled" ? "" : student.times}
+          />
         </Card>
       ) : null}
 
@@ -122,7 +151,8 @@ export default async function StudentPage({
                       {session.note ? ` · ${session.note}` : ""}
                     </div>
                   </div>
-                  {user.role === "STAFF" || session.tutorId === user.id ? (
+                  {(user.role === "STAFF" ||
+                    (session.tutorId === user.id && !student.stoppedAt)) ? (
                     <form action={deleteSession.bind(null, session.id)}>
                       <button type="submit" className="text-muted hover:text-foreground">
                         Remove

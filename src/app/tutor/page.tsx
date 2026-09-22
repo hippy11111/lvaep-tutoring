@@ -24,58 +24,60 @@ export default async function TutorHome() {
     orderBy: { student: { name: "asc" } },
   });
 
+  const activeAssignments = assignments.filter((assignment) => !assignment.student.stoppedAt);
+
   const recent = await prisma.session.findMany({
-    where: { tutorId: user.id },
+    where: { tutorId: user.id, student: { stoppedAt: null } },
     include: { student: true },
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     take: 12,
   });
 
-  const students = assignments
-    .map((assignment) => assignment.student)
-    .filter((student) => !student.stoppedAt);
+  const students = activeAssignments.map((assignment) => assignment.student);
 
   return (
     <Shell user={user}>
       <h1 className="text-2xl font-semibold">Your students</h1>
       <p className="mt-1 text-sm text-muted">
-        Log a session after each meeting. Hours here replace the yearly paper calendar.
+        Log a session after each meeting. Hours here replace the yearly paper calendar. Students you
+        have marked as stopped stay with staff until they resume tutoring.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {assignments.map((assignment) => {
-          const hours = assignment.student.sessions
-            .filter((session) => session.kind === "HELD")
-            .reduce((sum, session) => sum + (session.hours ?? 0), 0);
-          return (
-            <Link key={assignment.id} href={`/students/${assignment.studentId}`}>
-              <Card className="h-full hover:border-accent">
-                <div className="flex items-start justify-between gap-2">
+        {activeAssignments.length === 0 ? (
+          <p className="text-sm text-muted">No active students assigned to you.</p>
+        ) : (
+          activeAssignments.map((assignment) => {
+            const hours = assignment.student.sessions
+              .filter((session) => session.kind === "HELD")
+              .reduce((sum, session) => sum + (session.hours ?? 0), 0);
+            return (
+              <Link key={assignment.id} href={`/students/${assignment.studentId}`}>
+                <Card className="h-full hover:border-accent">
                   <h2 className="font-semibold">{assignment.student.name}</h2>
-                  {assignment.student.stoppedAt ? (
-                    <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted">
-                      Stopped
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-sm text-muted">{assignment.student.site}</p>
-                <p className="text-sm text-muted">
-                  {assignment.student.days} · {assignment.student.times}
-                </p>
-                <p className="mt-3 text-sm">
-                  <span className="font-medium">{hours.toFixed(1)}</span> hours this fiscal year
-                </p>
-              </Card>
-            </Link>
-          );
-        })}
+                  <p className="mt-1 text-sm text-muted">{assignment.student.site}</p>
+                  <p className="text-sm text-muted">
+                    {assignment.student.days} · {assignment.student.times}
+                  </p>
+                  <p className="mt-3 text-sm">
+                    <span className="font-medium">{hours.toFixed(1)}</span> hours this fiscal year
+                  </p>
+                </Card>
+              </Link>
+            );
+          })
+        )}
       </div>
 
-      <Card className="mt-8">
-        <h2 className="text-lg font-semibold">Log a session</h2>
-        <p className="mb-4 text-sm text-muted">Defaults to today. Fractional hours (for example 1.5) are allowed.</p>
-        <SessionForm students={students} />
-      </Card>
+      {students.length > 0 ? (
+        <Card className="mt-8">
+          <h2 className="text-lg font-semibold">Log a session</h2>
+          <p className="mb-4 text-sm text-muted">
+            Defaults to today. Fractional hours (for example 1.5) are allowed.
+          </p>
+          <SessionForm students={students} />
+        </Card>
+      ) : null}
 
       <Card className="mt-8">
         <h2 className="text-lg font-semibold">Recent records</h2>

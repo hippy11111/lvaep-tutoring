@@ -17,6 +17,7 @@ export type StudentReportRow = {
   newAchievements: string[];
   stopped: boolean;
   stoppedReason: string | null;
+  currentlyStopped: boolean;
 };
 
 export type TutorReportRow = {
@@ -104,6 +105,7 @@ export async function getMonthlyReport(month: string): Promise<MonthlyReport | n
       student.stoppedAt !== null &&
       student.stoppedAt >= range.start &&
       student.stoppedAt < range.end;
+    const currentlyStopped = student.stoppedAt !== null;
     return {
       studentId: student.id,
       studentName: student.name,
@@ -114,6 +116,7 @@ export async function getMonthlyReport(month: string): Promise<MonthlyReport | n
       newAchievements: achievementsByStudent.get(student.id) ?? [],
       stopped,
       stoppedReason: stopped ? student.stoppedReason : null,
+      currentlyStopped,
     };
   });
 
@@ -126,7 +129,7 @@ export async function getMonthlyReport(month: string): Promise<MonthlyReport | n
       sessionsHeld: 0,
       hours: 0,
     };
-    existing.studentCount += 1;
+    existing.studentCount += row.currentlyStopped ? 0 : 1;
     existing.sessionsHeld += row.sessionsHeld;
     existing.hours += row.hours;
     tutorMap.set(row.tutorId, existing);

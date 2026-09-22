@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STAFF
+  TUTOR
+}
+
+enum SessionKind {
+  HELD
+  TUTOR_ABSENT
+  STUDENT_ABSENT
+  HOLIDAY
+}
+
+model User {
+  id          String       @id @default(cuid())
+  name        String
+  role        Role
+  title       String?
+  assignments Assignment[]
+  sessions    Session[]
+}
+
+model Student {
+  id            String        @id @default(cuid())
+  name          String
+  site          String
+  days          String
+  times         String
+  stoppedAt     DateTime?
+  stoppedReason String?
+  assignments   Assignment[]
+  sessions      Session[]
+  achievements  Achievement[]
+}
+
+model Assignment {
+  id        String  @id @default(cuid())
+  tutorId   String
+  studentId String  @unique
+  tutor     User    @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String      @id @default(cuid())
+  studentId String
+  tutorId   String
+  date      DateTime    @db.Date
+  hours     Float?
+  kind      SessionKind
+  note      String?
+  createdAt DateTime    @default(now())
+  student   Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tutor     User        @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+}
+
+model Achievement {
+  id         String   @id @default(cuid())
+  studentId  String
+  goalId     String
+  attainedAt DateTime @default(now())
+  note       String?
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, goalId])
+}

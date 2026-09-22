@@ -185,7 +185,12 @@ export default async function StaffHome({
         ) : (
           <ul className="mt-3 grid gap-3 text-sm">
             {needsAttention.map((student) => (
-              <AssignmentRow key={student.id} student={student} tutors={tutors} highlight />
+              <AssignmentRow
+                key={`${student.id}-${student.assignments[0]?.tutorId ?? "none"}`}
+                student={student}
+                tutors={tutors}
+                highlight
+              />
             ))}
           </ul>
         )}
@@ -201,7 +206,11 @@ export default async function StaffHome({
         ) : (
           <ul className="mt-3 grid gap-3 text-sm">
             {activeAssigned.map((student) => (
-              <AssignmentRow key={student.id} student={student} tutors={tutors} />
+              <AssignmentRow
+                key={`${student.id}-${student.assignments[0]?.tutorId ?? "none"}`}
+                student={student}
+                tutors={tutors}
+              />
             ))}
           </ul>
         )}

@@ -16,6 +16,7 @@ export async function login(userId: string) {
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
+    secure: process.env.NODE_ENV === "production",
   });
   redirect(user.role === "STAFF" ? "/staff" : "/tutor");
 }
@@ -36,7 +37,12 @@ async function requireAssignedTutor(studentId: string) {
   return user;
 }
 
-export async function logSession(formData: FormData) {
+export type ActionResult = { ok: true } | { ok: false; error: string };
+
+export async function logSession(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
   const studentId = String(formData.get("studentId") ?? "");
   const date = String(formData.get("date") ?? "");
   const kind = String(formData.get("kind") ?? "HELD") as SessionKind;
@@ -46,19 +52,34 @@ export async function logSession(formData: FormData) {
   const user = await requireAssignedTutor(studentId);
 
   const validKind = ["HELD", "TUTOR_ABSENT", "STUDENT_ABSENT", "HOLIDAY"].includes(kind);
-  if (!studentId || !date || !validKind) return;
+  if (!studentId || !date || !validKind) {
+    return { ok: false, error: "Choose a student, date, and what happened." };
+  }
 
   let hours: number | null = null;
   if (kind === "HELD") {
     hours = Number(hoursRaw);
-    if (!Number.isFinite(hours) || hours <= 0 || hours > 8) return;
+    if (!Number.isFinite(hours) || hours <= 0 || hours > 8) {
+      return { ok: false, error: "Hours must be between 0.25 and 8." };
+    }
+  }
+
+  const sessionDate = new Date(`${date}T00:00:00.000Z`);
+  const duplicate = await prisma.session.findFirst({
+    where: { studentId, date: sessionDate },
+  });
+  if (duplicate) {
+    return {
+      ok: false,
+      error: "A record already exists for that date. Remove it first if you need to change it.",
+    };
   }
 
   await prisma.session.create({
     data: {
       studentId,
       tutorId: user.id,
-      date: new Date(`${date}T00:00:00.000Z`),
+      date: sessionDate,
       kind,
       hours,
       note,
@@ -68,6 +89,7 @@ export async function logSession(formData: FormData) {
   revalidatePath("/tutor");
   revalidatePath(`/students/${studentId}`);
   revalidatePath("/staff");
+  return { ok: true };
 }
 
 export async function deleteSession(sessionId: string) {

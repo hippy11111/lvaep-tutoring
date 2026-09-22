@@ -82,20 +82,27 @@ export default async function TutorHome() {
       <Card className="mt-8">
         <h2 className="text-lg font-semibold">Recent records</h2>
         <ul className="mt-3 divide-y divide-line">
-          {recent.map((session) => (
-            <li key={session.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-              <div>
-                <span className="font-medium">{session.student.name}</span>
-                <span className="text-muted"> · {formatDate(session.date)} · {label(session.kind, session.hours)}</span>
-                {session.note ? <div className="text-muted">{session.note}</div> : null}
-              </div>
-              <form action={deleteSession.bind(null, session.id)}>
-                <button type="submit" className="text-muted hover:text-foreground">
-                  Remove
-                </button>
-              </form>
-            </li>
-          ))}
+          {recent.length === 0 ? (
+            <li className="py-2 text-sm text-muted">No records yet.</li>
+          ) : (
+            recent.map((session) => (
+              <li key={session.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <div>
+                  <span className="font-medium">{session.student.name}</span>
+                  <span className="text-muted">
+                    {" "}
+                    · {formatDate(session.date)} · {label(session.kind, session.hours)}
+                  </span>
+                  {session.note ? <div className="text-muted">{session.note}</div> : null}
+                </div>
+                <form action={deleteSession.bind(null, session.id)}>
+                  <button type="submit" className="text-muted hover:text-foreground">
+                    Remove
+                  </button>
+                </form>
+              </li>
+            ))
+          )}
         </ul>
       </Card>
     </Shell>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { logSession } from "@/app/actions";
+import { calendarDateKey } from "@/lib/dates";
 
 const KINDS = [
   { value: "HELD", label: "Session held" },
@@ -9,6 +11,19 @@ const KINDS = [
   { value: "TUTOR_ABSENT", label: "Tutor absent (TA)" },
   { value: "HOLIDAY", label: "Holiday (H)" },
 ];
+
+function SaveButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-60"
+    >
+      {pending ? "Saving…" : "Save record"}
+    </button>
+  );
+}
 
 export function SessionForm({
   students,
@@ -18,10 +33,14 @@ export function SessionForm({
   defaultStudentId?: string;
 }) {
   const [kind, setKind] = useState("HELD");
-  const today = new Date().toISOString().slice(0, 10);
+  const [state, action] = useActionState(logSession, null);
+  const today = calendarDateKey().date;
 
   return (
-    <form action={logSession} className="grid gap-3 sm:grid-cols-2">
+    <form action={action} className="grid gap-3 sm:grid-cols-2">
+      {state && !state.ok ? (
+        <p className="sm:col-span-2 text-sm font-medium text-stopped">{state.error}</p>
+      ) : null}
       <label className="grid gap-1 text-sm">
         Student
         <select
@@ -77,7 +96,9 @@ export function SessionForm({
           />
         </label>
       ) : (
-        <div className="text-sm text-muted self-end">No hours recorded for absences or holidays.</div>
+        <div className="self-end text-sm text-muted">
+          No hours recorded for absences or holidays.
+        </div>
       )}
       <label className="grid gap-1 text-sm sm:col-span-2">
         Note (optional)
@@ -89,12 +110,7 @@ export function SessionForm({
         />
       </label>
       <div className="sm:col-span-2">
-        <button
-          type="submit"
-          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
-        >
-          Save record
-        </button>
+        <SaveButton />
       </div>
     </form>
   );

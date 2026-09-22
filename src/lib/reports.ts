@@ -167,11 +167,12 @@ export async function getMonthlyReport(month: string): Promise<MonthlyReport | n
 
 export function reportToCsv(report: MonthlyReport) {
   const lines = [
-    ["Student", "Tutor", "Site", "Sessions held", "Hours", "TA", "SA", "H", "Achievements this month", "Stopped", "Stop reason"],
+    ["Student", "Tutor", "Site", "Status", "Sessions held", "Hours", "TA", "SA", "H", "Achievements this month", "Stopped this month", "Stop reason"],
     ...report.byStudent.map((row) => [
       row.studentName,
       row.tutorName,
       row.site,
+      row.currentlyStopped ? "Stopped" : row.tutorId ? "Active" : "Unassigned",
       String(row.sessionsHeld),
       row.hours.toFixed(1),
       String(row.tutorAbsent),

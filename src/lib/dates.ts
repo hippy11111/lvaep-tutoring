@@ -1,5 +1,18 @@
+export function calendarDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return {
+    year,
+    month,
+    day,
+    date: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+    monthKey: `${year}-${String(month).padStart(2, "0")}`,
+  };
+}
+
 export function monthKey(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  return calendarDateKey(date).monthKey;
 }
 
 export function parseMonth(value: string) {
@@ -38,8 +51,8 @@ export function toDateInput(date: Date) {
 }
 
 export function fiscalYearRange(ref = new Date()) {
-  const year = ref.getUTCFullYear();
-  const month = ref.getUTCMonth();
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
   const startYear = month >= 6 ? year : year - 1;
   return {
     start: new Date(Date.UTC(startYear, 6, 1)),

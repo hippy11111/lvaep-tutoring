@@ -51,12 +51,12 @@ export default async function TutorHome() {
             const tint = studentTint(assignment.student.id, roster);
             return (
               <a key={assignment.id} href={`/students/${assignment.studentId}`}>
-                <Card
-                  className={`h-full hover:border-accent ${stopped ? "border-stopped/40" : ""}`}
-                  style={{ background: tint.bg }}
-                >
+                <Card className={`h-full hover:border-accent ${stopped ? "border-stopped/40" : ""}`}>
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-semibold" style={{ color: tint.text }}>
+                    <h2
+                      className="inline-flex rounded-full px-2.5 py-0.5 text-sm font-semibold"
+                      style={{ background: tint.bg, color: tint.text }}
+                    >
                       {assignment.student.name}
                     </h2>
                     {stopped ? (

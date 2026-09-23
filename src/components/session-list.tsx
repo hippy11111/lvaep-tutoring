@@ -51,15 +51,14 @@ export function SessionList({
           sessions.map((session) => {
             const tint = session.studentName ? studentTint(session.studentId, roster) : null;
             return (
-            <li
-              key={session.id}
-              className="flex items-start justify-between gap-3 rounded-md px-2 py-2"
-              style={tint ? { background: tint.bg } : undefined}
-            >
+            <li key={session.id} className="flex items-start justify-between gap-3 py-2">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   {session.studentName && tint ? (
-                    <span className="font-medium" style={{ color: tint.text }}>
+                    <span
+                      className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                      style={{ background: tint.bg, color: tint.text }}
+                    >
                       {session.studentName}
                     </span>
                   ) : null}

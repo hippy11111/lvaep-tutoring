@@ -33,8 +33,7 @@ export function MonthPicker({ month }: { month: string }) {
   const go = (next: string) => router.push(`/staff?month=${next}`);
 
   return (
-    <div className="grid gap-1 text-sm">
-      <span className="text-muted">Month</span>
+    <div className="text-sm">
       <div className="flex items-center gap-1">
         <button
           type="button"

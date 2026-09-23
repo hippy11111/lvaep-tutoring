@@ -8,13 +8,16 @@ export function BrandMark({
   alt?: string;
 }) {
   return (
-    <Image
-      src="/lvaep-logo.png"
-      alt={alt}
-      width={800}
-      height={516}
-      className={`w-auto mix-blend-multiply ${className}`}
-      priority
-    />
+    <span className={`inline-flex shrink-0 ${className}`}>
+      <Image
+        src="/lvaep-logo.png"
+        alt={alt}
+        width={800}
+        height={516}
+        className="h-full w-auto object-contain object-left mix-blend-multiply"
+        style={{ width: "auto", height: "100%" }}
+        priority
+      />
+    </span>
   );
 }

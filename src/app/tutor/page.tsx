@@ -33,6 +33,7 @@ export default async function TutorHome() {
   const activeStudents = assignments
     .filter((assignment) => !assignment.student.stoppedAt)
     .map((assignment) => assignment.student);
+  const roster = assignments.map((assignment) => assignment.student.id);
 
   return (
     <Shell user={user}>
@@ -47,7 +48,7 @@ export default async function TutorHome() {
               .filter((session) => session.kind === "HELD")
               .reduce((sum, session) => sum + (session.hours ?? 0), 0);
             const stopped = Boolean(assignment.student.stoppedAt);
-            const tint = studentTint(assignment.student.id);
+            const tint = studentTint(assignment.student.id, roster);
             return (
               <a key={assignment.id} href={`/students/${assignment.studentId}`}>
                 <Card
@@ -88,6 +89,7 @@ export default async function TutorHome() {
         </div>
         <SessionList
           canEdit
+          roster={roster}
           students={activeStudents}
           sessions={recent.map((session) => ({
             id: session.id,

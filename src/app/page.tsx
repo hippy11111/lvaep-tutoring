@@ -16,7 +16,7 @@ export default async function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-full max-w-xl flex-col justify-center px-4 py-16">
-      <BrandMark className="mb-4 h-14" alt="LVAEP" />
+      <BrandMark className="mb-5 h-16" alt="LVAEP" />
       <p className="text-sm font-semibold tracking-wide text-accent">
         Literacy Volunteers of America
       </p>

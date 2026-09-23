@@ -29,11 +29,13 @@ export function SessionList({
   sessions,
   students,
   canEdit,
+  roster = [],
   emptyLabel = "No records yet.",
 }: {
   sessions: (SessionRow & { summary: string; detail?: string })[];
   students: StudentOption[];
   canEdit: boolean;
+  roster?: string[];
   emptyLabel?: string;
 }) {
   const [editing, setEditing] = useState<SessionRow | null>(null);
@@ -47,7 +49,7 @@ export function SessionList({
           <li className="py-2 text-muted">{emptyLabel}</li>
         ) : (
           sessions.map((session) => {
-            const tint = session.studentName ? studentTint(session.studentId) : null;
+            const tint = session.studentName ? studentTint(session.studentId, roster) : null;
             return (
             <li
               key={session.id}

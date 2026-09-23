@@ -1,5 +1,4 @@
 import { createStudent } from "@/app/actions";
-import { TUTORING_SITES } from "@/lib/sites";
 
 type TutorOption = { id: string; name: string };
 
@@ -30,15 +29,9 @@ export function NewStudentForm({ tutors }: { tutors: TutorOption[] }) {
         Tutoring site (optional — tutor can set this)
         <input
           name="site"
-          list="tutoring-sites"
-          placeholder="Bloomfield Public Library"
+          placeholder="Library, school, or other location"
           className="rounded-md border border-line bg-white px-3 py-2"
         />
-        <datalist id="tutoring-sites">
-          {TUTORING_SITES.map((site) => (
-            <option key={site} value={site} />
-          ))}
-        </datalist>
       </label>
       <div className="sm:col-span-2">
         <button

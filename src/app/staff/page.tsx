@@ -50,17 +50,17 @@ export default async function StaffHome({
 
   return (
     <Shell user={user}>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Monthly report</h1>
-        <div className="flex flex-wrap items-end gap-3 text-sm">
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <div className="grid gap-3">
+          <h1 className="text-2xl font-semibold">Monthly report</h1>
           <MonthPicker month={month} />
-          <a
-            href={`/staff/report.csv?month=${month}`}
-            className="rounded-md border-2 border-foreground bg-white px-3 py-1.5 font-medium text-foreground hover:bg-foreground hover:text-white"
-          >
-            Download CSV
-          </a>
         </div>
+        <a
+          href={`/staff/report.csv?month=${month}`}
+          className="rounded-md border-2 border-foreground bg-white px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+        >
+          Download CSV
+        </a>
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

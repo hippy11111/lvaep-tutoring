@@ -1,7 +1,7 @@
 import { SessionKind } from "@prisma/client";
 import { prisma } from "./prisma";
 import { parseMonth } from "./dates";
-import { achievementLabel } from "./goals";
+import { achievementLabel, categoryProgress, type CategoryProgress } from "./goals";
 
 export type StudentReportRow = {
   studentId: string;
@@ -15,6 +15,7 @@ export type StudentReportRow = {
   studentAbsent: number;
   holidays: number;
   newAchievements: string[];
+  achievementByCategory: CategoryProgress[];
   stopped: boolean;
   stoppedReason: string | null;
   currentlyStopped: boolean;
@@ -78,9 +79,7 @@ export async function getMonthlyReport(month: string): Promise<MonthlyReport | n
     prisma.session.findMany({
       where: { date: { gte: range.start, lt: range.end } },
     }),
-    prisma.achievement.findMany({
-      where: { attainedAt: { gte: range.start, lt: range.end } },
-    }),
+    prisma.achievement.findMany(),
   ]);
 
   const sessionByStudent = new Map<string, ReturnType<typeof emptyCounts>>();
@@ -91,7 +90,12 @@ export async function getMonthlyReport(month: string): Promise<MonthlyReport | n
   }
 
   const achievementsByStudent = new Map<string, string[]>();
+  const achievementIdsByStudent = new Map<string, string[]>();
   for (const achievement of achievements) {
+    const ids = achievementIdsByStudent.get(achievement.studentId) ?? [];
+    ids.push(achievement.goalId);
+    achievementIdsByStudent.set(achievement.studentId, ids);
+    if (achievement.attainedAt < range.start || achievement.attainedAt >= range.end) continue;
     const label = achievementLabel(achievement.goalId, achievement.note);
     const list = achievementsByStudent.get(achievement.studentId) ?? [];
     list.push(label);
@@ -114,6 +118,7 @@ export async function getMonthlyReport(month: string): Promise<MonthlyReport | n
       site: student.site,
       ...counts,
       newAchievements: achievementsByStudent.get(student.id) ?? [],
+      achievementByCategory: categoryProgress(achievementIdsByStudent.get(student.id) ?? []),
       stopped,
       stoppedReason: stopped ? student.stoppedReason : null,
       currentlyStopped,

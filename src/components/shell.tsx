@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { User } from "@prisma/client";
 import { logout } from "@/app/actions";
+import { BrandMark } from "./brand";
 
 export function Shell({
   user,
@@ -16,7 +17,8 @@ export function Shell({
       <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
           <div>
-            <Link href={home} className="text-sm font-semibold tracking-wide text-accent">
+            <Link href={home} className="flex items-center gap-2 text-sm font-semibold tracking-wide text-accent">
+              <BrandMark className="h-7" />
               LVAEP
             </Link>
             <p className="text-xs text-muted">Tutoring sessions & monthly reports</p>
@@ -47,12 +49,14 @@ export function Shell({
 export function Card({
   children,
   className = "",
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   return (
-    <div className={`rounded-xl border border-line bg-card p-5 shadow-sm ${className}`}>
+    <div className={`rounded-xl border border-line bg-card p-5 shadow-sm ${className}`} style={style}>
       {children}
     </div>
   );

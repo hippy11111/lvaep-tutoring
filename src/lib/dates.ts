@@ -26,6 +26,13 @@ export function parseMonth(value: string) {
   return { year, month, start, end };
 }
 
+export function shiftMonth(value: string, delta: number) {
+  const parsed = parseMonth(value);
+  if (!parsed) return value;
+  const next = new Date(Date.UTC(parsed.year, parsed.month - 1 + delta, 1));
+  return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
 export function formatMonthLabel(value: string) {
   const parsed = parseMonth(value);
   if (!parsed) return value;

@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { deleteSession } from "@/app/actions";
 import { Modal } from "./modal";
 import { SessionForm } from "./session-form";
+import { studentTint } from "@/lib/tutor-style";
 
 type StudentOption = { id: string; name: string };
 
 type SessionRow = {
   id: string;
   studentId: string;
+  studentName?: string;
   date: Date | string;
   kind: string;
   hours: number | null;
@@ -44,10 +46,23 @@ export function SessionList({
         {sessions.length === 0 ? (
           <li className="py-2 text-muted">{emptyLabel}</li>
         ) : (
-          sessions.map((session) => (
-            <li key={session.id} className="flex items-start justify-between gap-3 py-2">
+          sessions.map((session) => {
+            const tint = session.studentName ? studentTint(session.studentId) : null;
+            return (
+            <li
+              key={session.id}
+              className="flex items-start justify-between gap-3 rounded-md px-2 py-2"
+              style={tint ? { background: tint.bg } : undefined}
+            >
               <div>
-                <div>{session.summary}</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {session.studentName && tint ? (
+                    <span className="font-medium" style={{ color: tint.text }}>
+                      {session.studentName}
+                    </span>
+                  ) : null}
+                  <span>{session.summary}</span>
+                </div>
                 {session.detail ? <div className="text-muted">{session.detail}</div> : null}
               </div>
               {canEdit && session.editable !== false ? (
@@ -63,7 +78,8 @@ export function SessionList({
                 </button>
               ) : null}
             </li>
-          ))
+            );
+          })
         )}
       </ul>
 

@@ -104,3 +104,35 @@ export function achievementLabel(goalId: string, note?: string | null) {
   if (isOtherGoal(goalId)) return note?.trim() || "Other";
   return goalById(goalId)?.label ?? goalId;
 }
+
+export type CategoryProgress = {
+  id: GoalCategory;
+  short: string;
+  attained: number;
+  total: number;
+};
+
+const CATEGORY_LETTERS: Record<GoalCategory, string> = {
+  economic: "A",
+  educational: "B",
+  family: "C",
+  community: "D",
+  other: "E",
+};
+
+export function categoryProgress(goalIds: string[]): CategoryProgress[] {
+  return GOAL_CATEGORIES.map((category) => {
+    const ids = goalIds.filter((id) =>
+      category.id === "other"
+        ? isOtherGoal(id)
+        : goalById(id)?.category === category.id,
+    );
+    const catalog = GOALS.filter((goal) => goal.category === category.id).length;
+    return {
+      id: category.id,
+      short: CATEGORY_LETTERS[category.id],
+      attained: ids.length,
+      total: Math.max(catalog, ids.length),
+    };
+  });
+}

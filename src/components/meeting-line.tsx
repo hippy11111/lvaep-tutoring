@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateStudentSchedule } from "@/app/actions";
-import { TUTORING_SITES } from "@/lib/sites";
 import { Modal } from "./modal";
 
 export function MeetingLine({
@@ -56,15 +55,10 @@ export function MeetingLine({
             <input
               name="site"
               required
-              list="meeting-sites"
               defaultValue={unset ? "" : site}
+              placeholder="Library, school, or other location"
               className="rounded-md border border-line bg-white px-3 py-2"
             />
-            <datalist id="meeting-sites">
-              {TUTORING_SITES.map((option) => (
-                <option key={option} value={option} />
-              ))}
-            </datalist>
           </label>
           <label className="grid gap-1 text-sm">
             Day(s)

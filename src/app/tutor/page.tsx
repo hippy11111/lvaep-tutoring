@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDate, fiscalYearRange } from "@/lib/dates";
 import { Shell, Card } from "@/components/shell";
 import { LogSessionButton, SessionList } from "@/components/session-list";
+import { studentTint } from "@/lib/tutor-style";
 
 export default async function TutorHome() {
   const user = await requireRole("TUTOR");
@@ -46,11 +47,17 @@ export default async function TutorHome() {
               .filter((session) => session.kind === "HELD")
               .reduce((sum, session) => sum + (session.hours ?? 0), 0);
             const stopped = Boolean(assignment.student.stoppedAt);
+            const tint = studentTint(assignment.student.id);
             return (
               <a key={assignment.id} href={`/students/${assignment.studentId}`}>
-                <Card className={`h-full hover:border-accent ${stopped ? "border-stopped/40" : ""}`}>
+                <Card
+                  className={`h-full hover:border-accent ${stopped ? "border-stopped/40" : ""}`}
+                  style={{ background: tint.bg }}
+                >
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-semibold">{assignment.student.name}</h2>
+                    <h2 className="font-semibold" style={{ color: tint.text }}>
+                      {assignment.student.name}
+                    </h2>
                     {stopped ? (
                       <span className="rounded-full bg-stopped/12 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-stopped">
                         No longer being tutored
@@ -89,7 +96,8 @@ export default async function TutorHome() {
             kind: session.kind,
             hours: session.hours,
             note: session.note,
-            summary: `${session.student.name} · ${formatDate(session.date)} · ${label(session.kind, session.hours)}`,
+            studentName: session.student.name,
+            summary: `${formatDate(session.date)} · ${label(session.kind, session.hours)}`,
             editable: !session.student.stoppedAt,
           }))}
         />

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { StudentStatus } from "./status-badge";
 import { tutorTint } from "@/lib/tutor-style";
+import type { CategoryProgress } from "@/lib/goals";
 
 type Row = {
   studentId: string;
@@ -13,7 +14,7 @@ type Row = {
   studentAbsent: number;
   tutorAbsent: number;
   holidays: number;
-  newAchievements: string[];
+  achievementByCategory: CategoryProgress[];
   currentlyStopped: boolean;
   stopped: boolean;
 };
@@ -24,17 +25,13 @@ export function StudentBreakdownTable({ rows }: { rows: Row[] }) {
     <table className="mt-3 w-full text-left text-sm">
       <thead className="text-muted">
         <tr>
-          <th className="pb-2 font-medium">Student</th>
-          <th className="pb-2 font-medium">Tutor</th>
-          <th className="pb-2 font-medium">Hours</th>
-          <th className="pb-2 font-medium">
-            <span className="inline-grid w-full grid-cols-3 gap-1 text-center">
-              <span>SA</span>
-              <span>TA</span>
-              <span>H</span>
-            </span>
-          </th>
-          <th className="pb-2 font-medium">Achievements</th>
+          <th className="pb-2 pl-4 pr-3 font-medium">Student</th>
+          <th className="px-3 pb-2 font-medium">Tutor</th>
+          <th className="px-3 pb-2 font-medium">Hours</th>
+          <th className="w-12 px-3 pb-2 text-center font-medium">SA</th>
+          <th className="w-12 px-3 pb-2 text-center font-medium">TA</th>
+          <th className="w-12 px-3 pb-2 text-center font-medium">H</th>
+          <th className="pb-2 pl-6 pr-3 font-medium">Achievements</th>
         </tr>
       </thead>
       <tbody>
@@ -49,7 +46,7 @@ export function StudentBreakdownTable({ rows }: { rows: Row[] }) {
                 index % 2 === 0 ? "bg-sky-50" : "bg-white"
               } hover:bg-sky-100`}
             >
-              <td className="py-2">
+              <td className="py-2.5 pl-4 pr-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{row.studentName}</span>
                   <StudentStatus unassigned={unassigned} stopped={row.currentlyStopped} />
@@ -58,7 +55,7 @@ export function StudentBreakdownTable({ rows }: { rows: Row[] }) {
                   <div className="text-xs text-muted">Stopped this month</div>
                 ) : null}
               </td>
-              <td>
+              <td className="px-3">
                 {unassigned ? (
                   "—"
                 ) : (
@@ -70,16 +67,18 @@ export function StudentBreakdownTable({ rows }: { rows: Row[] }) {
                   </span>
                 )}
               </td>
-              <td>{row.hours.toFixed(1)}</td>
-              <td>
-                <span className="inline-grid w-full grid-cols-3 gap-1 text-center tabular-nums">
-                  <span>{row.studentAbsent}</span>
-                  <span>{row.tutorAbsent}</span>
-                  <span>{row.holidays}</span>
+              <td className="px-3 tabular-nums">{row.hours.toFixed(1)}</td>
+              <td className="px-3 text-center tabular-nums">{row.studentAbsent}</td>
+              <td className="px-3 text-center tabular-nums">{row.tutorAbsent}</td>
+              <td className="px-3 text-center tabular-nums">{row.holidays}</td>
+              <td className="pl-6 pr-3">
+                <span className="flex flex-wrap gap-x-3 gap-y-1 tabular-nums text-muted">
+                  {row.achievementByCategory.map((item) => (
+                    <span key={item.id}>
+                      {item.short}: {item.attained}/{item.total}
+                    </span>
+                  ))}
                 </span>
-              </td>
-              <td className="max-w-xs text-muted">
-                {row.newAchievements.length ? row.newAchievements.join(", ") : "—"}
               </td>
             </tr>
           );

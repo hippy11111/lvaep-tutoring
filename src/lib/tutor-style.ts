@@ -11,9 +11,17 @@ const PALETTE: TutorTint[] = [
 
 const UNASSIGNED: TutorTint = { bg: "#f3f4f6", text: "#4b5563" };
 
+function hashTint(id: string): TutorTint {
+  let hash = 0;
+  for (const char of id) hash += char.charCodeAt(0);
+  return PALETTE[hash % PALETTE.length];
+}
+
 export function tutorTint(tutorId: string | null | undefined): TutorTint {
   if (!tutorId) return UNASSIGNED;
-  let hash = 0;
-  for (const char of tutorId) hash += char.charCodeAt(0);
-  return PALETTE[hash % PALETTE.length];
+  return hashTint(tutorId);
+}
+
+export function studentTint(studentId: string): TutorTint {
+  return hashTint(studentId);
 }

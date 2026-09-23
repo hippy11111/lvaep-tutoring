@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { login } from "./actions";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { BrandMark } from "@/components/brand";
 
 export default async function LoginPage() {
   const current = await getCurrentUser();
@@ -15,6 +16,7 @@ export default async function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-full max-w-xl flex-col justify-center px-4 py-16">
+      <BrandMark className="mb-4 h-14" alt="LVAEP" />
       <p className="text-sm font-semibold tracking-wide text-accent">
         Literacy Volunteers of America
       </p>

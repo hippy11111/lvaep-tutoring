@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Modal } from "./modal";
 import { NewStudentForm } from "./new-student-form";
+import { shiftMonth } from "@/lib/dates";
 import { useState } from "react";
 
 export function AddStudentButton({
@@ -29,15 +30,36 @@ export function AddStudentButton({
 
 export function MonthPicker({ month }: { month: string }) {
   const router = useRouter();
+  const go = (next: string) => router.push(`/staff?month=${next}`);
+
   return (
-    <label className="grid gap-1 text-sm">
+    <div className="grid gap-1 text-sm">
       <span className="text-muted">Month</span>
-      <input
-        type="month"
-        value={month}
-        onChange={(event) => router.push(`/staff?month=${event.target.value}`)}
-        className="rounded-md border border-line bg-white px-2 py-1.5"
-      />
-    </label>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-label="Previous month"
+          onClick={() => go(shiftMonth(month, -1))}
+          className="rounded-md border border-line bg-white px-2 py-1.5 font-medium hover:bg-background"
+        >
+          ‹
+        </button>
+        <input
+          type="month"
+          value={month}
+          aria-label="Choose month"
+          onChange={(event) => go(event.target.value)}
+          className="rounded-md border border-line bg-white px-2 py-1.5"
+        />
+        <button
+          type="button"
+          aria-label="Next month"
+          onClick={() => go(shiftMonth(month, 1))}
+          className="rounded-md border border-line bg-white px-2 py-1.5 font-medium hover:bg-background"
+        >
+          ›
+        </button>
+      </div>
+    </div>
   );
 }

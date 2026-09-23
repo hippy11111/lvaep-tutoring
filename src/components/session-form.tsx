@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { logSession } from "@/app/actions";
+import { logSession, updateSession, type ActionResult } from "@/app/actions";
 import { calendarDateKey } from "@/lib/dates";
 
 const KINDS = [
@@ -12,7 +12,7 @@ const KINDS = [
   { value: "HOLIDAY", label: "Holiday (H)" },
 ];
 
-function SaveButton() {
+function SaveButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -20,7 +20,7 @@ function SaveButton() {
       disabled={pending}
       className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-60"
     >
-      {pending ? "Saving…" : "Save record"}
+      {pending ? "Saving…" : label}
     </button>
   );
 }
@@ -28,16 +28,34 @@ function SaveButton() {
 export function SessionForm({
   students,
   defaultStudentId,
+  session,
+  onSuccess,
 }: {
   students: { id: string; name: string }[];
   defaultStudentId?: string;
+  session?: {
+    id: string;
+    date: string;
+    kind: string;
+    hours: number | null;
+    note: string | null;
+  };
+  onSuccess?: () => void;
 }) {
-  const [kind, setKind] = useState("HELD");
-  const [state, action] = useActionState(logSession, null);
+  const [kind, setKind] = useState(session?.kind ?? "HELD");
+  const [state, action] = useActionState(
+    session ? updateSession : logSession,
+    null as ActionResult | null,
+  );
   const today = calendarDateKey().date;
+
+  useEffect(() => {
+    if (state?.ok) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={action} className="grid gap-3 sm:grid-cols-2">
+      {session ? <input type="hidden" name="sessionId" value={session.id} /> : null}
       {state && !state.ok ? (
         <p className="sm:col-span-2 text-sm font-medium text-stopped">{state.error}</p>
       ) : null}
@@ -46,8 +64,9 @@ export function SessionForm({
         <select
           name="studentId"
           required
+          disabled={Boolean(session)}
           defaultValue={defaultStudentId ?? students[0]?.id}
-          className="rounded-md border border-line bg-white px-3 py-2"
+          className="rounded-md border border-line bg-white px-3 py-2 disabled:bg-background"
         >
           {students.map((student) => (
             <option key={student.id} value={student.id}>
@@ -62,7 +81,7 @@ export function SessionForm({
           type="date"
           name="date"
           required
-          defaultValue={today}
+          defaultValue={session?.date ?? today}
           className="rounded-md border border-line bg-white px-3 py-2"
         />
       </label>
@@ -90,7 +109,7 @@ export function SessionForm({
             min={0.25}
             max={8}
             step={0.25}
-            defaultValue={2}
+            defaultValue={session?.hours ?? 2}
             required
             className="rounded-md border border-line bg-white px-3 py-2"
           />
@@ -105,12 +124,13 @@ export function SessionForm({
         <input
           type="text"
           name="note"
+          defaultValue={session?.note ?? ""}
           placeholder="Makeup session, homework credit, etc."
           className="rounded-md border border-line bg-white px-3 py-2"
         />
       </label>
       <div className="sm:col-span-2">
-        <SaveButton />
+        <SaveButton label={session ? "Save changes" : "Save record"} />
       </div>
     </form>
   );

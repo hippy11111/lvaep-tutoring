@@ -1,7 +1,7 @@
 import { SessionKind } from "@prisma/client";
 import { prisma } from "./prisma";
 import { parseMonth } from "./dates";
-import { goalById } from "./goals";
+import { achievementLabel } from "./goals";
 
 export type StudentReportRow = {
   studentId: string;
@@ -92,7 +92,7 @@ export async function getMonthlyReport(month: string): Promise<MonthlyReport | n
 
   const achievementsByStudent = new Map<string, string[]>();
   for (const achievement of achievements) {
-    const label = goalById(achievement.goalId)?.label ?? achievement.goalId;
+    const label = achievementLabel(achievement.goalId, achievement.note);
     const list = achievementsByStudent.get(achievement.studentId) ?? [];
     list.push(label);
     achievementsByStudent.set(achievement.studentId, list);

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { SessionKind } from "@prisma/client";
 import { USER_COOKIE, requireRole, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { GOALS } from "@/lib/goals";
+import { GOALS, isOtherGoal } from "@/lib/goals";
 
 export async function login(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -111,9 +111,65 @@ export async function deleteSession(sessionId: string) {
   revalidatePath("/staff");
 }
 
+export async function updateSession(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const sessionId = String(formData.get("sessionId") ?? "");
+  const date = String(formData.get("date") ?? "");
+  const kind = String(formData.get("kind") ?? "HELD") as SessionKind;
+  const note = String(formData.get("note") ?? "").trim() || null;
+  const hoursRaw = String(formData.get("hours") ?? "");
+
+  const user = await requireUser();
+  const session = await prisma.session.findUnique({
+    where: { id: sessionId },
+    include: { student: true },
+  });
+  if (!session) return { ok: false, error: "Record not found." };
+  if (user.role !== "STAFF") {
+    if (session.tutorId !== user.id || session.student.stoppedAt) {
+      return { ok: false, error: "You cannot edit this record." };
+    }
+  }
+
+  const validKind = ["HELD", "TUTOR_ABSENT", "STUDENT_ABSENT", "HOLIDAY"].includes(kind);
+  if (!date || !validKind) {
+    return { ok: false, error: "Choose a date and what happened." };
+  }
+
+  let hours: number | null = null;
+  if (kind === "HELD") {
+    hours = Number(hoursRaw);
+    if (!Number.isFinite(hours) || hours <= 0 || hours > 8) {
+      return { ok: false, error: "Hours must be between 0.25 and 8." };
+    }
+  }
+
+  const sessionDate = new Date(`${date}T00:00:00.000Z`);
+  const duplicate = await prisma.session.findFirst({
+    where: { studentId: session.studentId, date: sessionDate, NOT: { id: sessionId } },
+  });
+  if (duplicate) {
+    return { ok: false, error: "Another record already exists for that date." };
+  }
+
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: { date: sessionDate, kind, hours, note },
+  });
+
+  revalidatePath("/tutor");
+  revalidatePath(`/students/${session.studentId}`);
+  revalidatePath("/staff");
+  return { ok: true };
+}
+
 export async function toggleAchievement(studentId: string, goalId: string, note?: string) {
   await requireAssignedTutor(studentId);
-  if (!GOALS.some((goal) => goal.id === goalId)) return;
+  const known =
+    GOALS.some((goal) => goal.id === goalId) || isOtherGoal(goalId);
+  if (!known) return;
 
   const existing = await prisma.achievement.findUnique({
     where: { studentId_goalId: { studentId, goalId } },
@@ -126,7 +182,7 @@ export async function toggleAchievement(studentId: string, goalId: string, note?
       data: {
         studentId,
         goalId,
-        note: goalId === "other" ? note?.trim() || null : null,
+        note: isOtherGoal(goalId) ? note?.trim() || null : null,
       },
     });
   }
@@ -150,7 +206,6 @@ export async function stopTutoring(formData: FormData) {
   revalidatePath(`/students/${studentId}`);
   revalidatePath("/staff");
   revalidatePath("/tutor");
-  redirect("/tutor");
 }
 
 export async function resumeTutoring(studentId: string) {
@@ -165,11 +220,8 @@ export async function resumeTutoring(studentId: string) {
   revalidatePath("/tutor");
 }
 
-export async function setStudentAssignment(formData: FormData) {
+export async function setStudentTutor(studentId: string, tutorId: string) {
   await requireRole("STAFF");
-
-  const studentId = String(formData.get("studentId") ?? "");
-  const tutorId = String(formData.get("tutorId") ?? "");
   if (!studentId) return;
 
   const student = await prisma.student.findUnique({ where: { id: studentId } });

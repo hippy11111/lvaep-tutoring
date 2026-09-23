@@ -26,7 +26,6 @@ export function Shell({
               <div className="font-medium">{user.name}</div>
               <div className="text-xs text-muted">
                 {user.role === "STAFF" ? "Staff" : "Tutor"}
-                {user.title ? ` · ${user.title}` : ""}
               </div>
             </div>
             <form action={logout}>

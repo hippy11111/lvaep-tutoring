@@ -88,9 +88,19 @@ export const GOALS: Goal[] = [
     nrs: false,
   },
   { id: "vote", category: "community", label: "Vote or register to vote", nrs: false },
-  { id: "other", category: "other", label: "Other (describe when attained)", nrs: false },
+  { id: "other-1", category: "other", label: "Other", nrs: false },
+  { id: "other-2", category: "other", label: "Other", nrs: false },
 ];
+
+export function isOtherGoal(id: string) {
+  return id === "other" || id.startsWith("other-");
+}
 
 export function goalById(id: string) {
   return GOALS.find((goal) => goal.id === id);
+}
+
+export function achievementLabel(goalId: string, note?: string | null) {
+  if (isOtherGoal(goalId)) return note?.trim() || "Other";
+  return goalById(goalId)?.label ?? goalId;
 }

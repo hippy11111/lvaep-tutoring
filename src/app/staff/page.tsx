@@ -1,12 +1,13 @@
-import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { formatMonthLabel, monthKey } from "@/lib/dates";
+import { monthKey } from "@/lib/dates";
 import { getMonthlyReport } from "@/lib/reports";
 import { prisma } from "@/lib/prisma";
 import { Shell, Card } from "@/components/shell";
-import { AssignmentForm } from "@/components/assignment-form";
-import { NewStudentForm } from "@/components/new-student-form";
 import { StudentStatus } from "@/components/status-badge";
+import { TutorPicker } from "@/components/tutor-picker";
+import { AddStudentButton, MonthPicker } from "@/components/staff-controls";
+import { StudentBreakdownTable } from "@/components/student-breakdown-table";
+import { tutorTint } from "@/lib/tutor-style";
 
 export default async function StaffHome({
   searchParams,
@@ -50,46 +51,27 @@ export default async function StaffHome({
   return (
     <Shell user={user}>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Monthly report</h1>
-          <p className="mt-1 text-sm text-muted">
-            Totals are calculated from session records. This replaces collecting one paper form per
-            student.
-          </p>
-        </div>
-        <form className="flex items-center gap-2 text-sm">
-          <label>
-            Month
-            <input
-              type="month"
-              name="month"
-              defaultValue={month}
-              className="ml-2 rounded-md border border-line bg-white px-2 py-1.5"
-            />
-          </label>
-          <button type="submit" className="rounded-md border border-line px-3 py-1.5">
-            View
-          </button>
+        <h1 className="text-2xl font-semibold">Monthly report</h1>
+        <div className="flex flex-wrap items-end gap-3 text-sm">
+          <MonthPicker month={month} />
           <a
             href={`/staff/report.csv?month=${month}`}
-            className="rounded-md bg-accent px-3 py-1.5 text-white hover:bg-accent-dark"
+            className="rounded-md border-2 border-foreground bg-white px-3 py-1.5 font-medium text-foreground hover:bg-foreground hover:text-white"
           >
             Download CSV
           </a>
-        </form>
+        </div>
       </div>
 
-      <p className="mt-2 text-sm font-medium">{formatMonthLabel(month)}</p>
-
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Hours tutored" value={report.totals.hours.toFixed(1)} />
-        <Stat label="Sessions held" value={String(report.totals.sessionsHeld)} />
-        <Stat label="Unassigned" value={String(unassignedCount)} />
+        <Stat label="Total hours tutored" value={report.totals.hours.toFixed(1)} />
+        <Stat label="Total sessions held" value={String(report.totals.sessionsHeld)} />
+        <Stat label="Unassigned students" value={String(unassignedCount)} />
         <Stat label="Currently stopped" value={String(currentlyStoppedCount)} />
       </div>
 
       <Card className="mt-8 overflow-x-auto">
-        <h2 className="text-lg font-semibold">By tutor</h2>
+        <h2 className="text-lg font-semibold">Breakdown by tutor</h2>
         <table className="mt-3 w-full text-left text-sm">
           <thead className="text-muted">
             <tr>
@@ -100,85 +82,40 @@ export default async function StaffHome({
             </tr>
           </thead>
           <tbody>
-            {report.byTutor.map((row) => (
-              <tr key={row.tutorId} className="border-t border-line">
-                <td className="py-2">{row.tutorName}</td>
-                <td>{row.studentCount}</td>
-                <td>{row.sessionsHeld}</td>
-                <td>{row.hours.toFixed(1)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
-
-      <Card className="mt-6 overflow-x-auto">
-        <h2 className="text-lg font-semibold">By student</h2>
-        <table className="mt-3 w-full text-left text-sm">
-          <thead className="text-muted">
-            <tr>
-              <th className="pb-2 font-medium">Student</th>
-              <th className="pb-2 font-medium">Tutor</th>
-              <th className="pb-2 font-medium">Hours</th>
-              <th className="pb-2 font-medium">SA / TA / H</th>
-              <th className="pb-2 font-medium">Achievements</th>
-            </tr>
-          </thead>
-          <tbody>
-            {report.byStudent.map((row) => {
-              const unassigned = !row.tutorId;
+            {report.byTutor.map((row) => {
+              const tint = tutorTint(row.tutorId || null);
               return (
-              <tr
-                key={row.studentId}
-                className={`border-t border-line ${
-                  row.currentlyStopped
-                    ? "bg-stopped/[0.06]"
-                    : unassigned
-                      ? "bg-waitlist/[0.08]"
-                      : ""
-                }`}
-              >
-                <td className="py-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link href={`/students/${row.studentId}`} className="underline decoration-line">
-                      {row.studentName}
-                    </Link>
-                    <StudentStatus unassigned={unassigned} stopped={row.currentlyStopped} />
-                  </div>
-                  {row.stopped ? (
-                    <div className="text-xs text-muted">Stopped this month</div>
-                  ) : null}
-                </td>
-                <td>{unassigned ? "—" : row.tutorName}</td>
-                <td>{row.hours.toFixed(1)}</td>
-                <td>
-                  {row.studentAbsent} / {row.tutorAbsent} / {row.holidays}
-                </td>
-                <td className="max-w-xs text-muted">
-                  {row.newAchievements.length ? row.newAchievements.join(", ") : "—"}
-                </td>
-              </tr>
+                <tr key={row.tutorId || "unassigned"} className="border-t border-line">
+                  <td className="py-2">
+                    <span
+                      className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                      style={{ background: tint.bg, color: tint.text }}
+                    >
+                      {row.tutorName}
+                    </span>
+                  </td>
+                  <td>{row.studentCount}</td>
+                  <td>{row.sessionsHeld}</td>
+                  <td>{row.hours.toFixed(1)}</td>
+                </tr>
               );
             })}
           </tbody>
         </table>
       </Card>
 
-      <Card className="mt-6">
-        <h2 className="text-lg font-semibold">Add a student</h2>
-        <p className="mt-1 text-sm text-muted">
-          Staff enroll students. Meeting days, times, and location are filled in by the assigned
-          tutor.
-        </p>
-        <div className="mt-3">
-          <NewStudentForm tutors={tutors} />
+      <Card className="mt-6 overflow-x-auto">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Breakdown by student</h2>
+          <AddStudentButton tutors={tutors} />
         </div>
+        <StudentBreakdownTable rows={report.byStudent} />
       </Card>
 
       <Card className="mt-6">
         <h2 className="text-lg font-semibold">Needs attention</h2>
         <p className="mt-1 text-sm text-muted">
-          Waitlist (no tutor) and students whose tutoring has been stopped.
+          Unassigned students and students whose tutoring has been stopped.
         </p>
         {needsAttention.length === 0 ? (
           <p className="mt-3 text-sm text-muted">None right now.</p>
@@ -198,9 +135,6 @@ export default async function StaffHome({
 
       <Card className="mt-6">
         <h2 className="text-lg font-semibold">Active assignments</h2>
-        <p className="mt-1 text-sm text-muted">
-          Staff assign and transfer students. Tutors cannot change who they work with.
-        </p>
         {activeAssigned.length === 0 ? (
           <p className="mt-3 text-sm text-muted">No active assigned students.</p>
         ) : (
@@ -258,14 +192,14 @@ function AssignmentRow({
     >
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/students/${student.id}`} className="font-medium underline decoration-line">
+          <a href={`/students/${student.id}`} className="font-medium underline decoration-line">
             {student.name}
-          </Link>
+          </a>
           <StudentStatus unassigned={unassigned} stopped={stopped} />
         </div>
         <div className="text-muted">{student.site}</div>
       </div>
-      <AssignmentForm
+      <TutorPicker
         studentId={student.id}
         tutors={tutors}
         currentTutorId={assignment?.tutorId ?? null}

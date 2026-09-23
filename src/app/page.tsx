@@ -29,7 +29,7 @@ export default async function LoginPage() {
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Staff</h2>
         <ul className="grid gap-2">
           {staff.map((user) => (
-            <UserButton key={user.id} id={user.id} name={user.name} detail={user.title} />
+            <UserButton key={user.id} id={user.id} name={user.name} detail="Staff" />
           ))}
         </ul>
       </section>
@@ -38,7 +38,7 @@ export default async function LoginPage() {
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Tutors</h2>
         <ul className="grid gap-2">
           {tutors.map((user) => (
-            <UserButton key={user.id} id={user.id} name={user.name} detail={user.title} />
+            <UserButton key={user.id} id={user.id} name={user.name} detail="Tutor" />
           ))}
         </ul>
       </section>

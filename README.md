@@ -40,7 +40,7 @@ Open [http://localhost:3000](http://localhost:3000) and pick a seeded staff or t
 
 Seeded hours are in **August 2026** and **September 2026**.
 
-1. Staff (**Sydnay Eckerling**): assign waitlist student **Rosa Alvarez**, or add a new student. Unassigned and stopped students sit in **Needs attention**.
+1. Staff (**Sydnay Eckerling**): assign **Rosa Alvarez** (unassigned), or add a new student. Unassigned and stopped students sit in **Needs attention**.
 2. Tutor (**Maria Alvarez**): set site/days/times, log a session (try saving the same date twice — it should refuse). Mark an achievement.
 3. Tutor: stop a student. They leave your roster. Switch back to staff, open that student, **Resume tutoring**.
 4. Staff: download CSV for September 2026.
@@ -68,11 +68,11 @@ Layout: `src/app` for tutor vs staff routes, `src/app/actions.ts` for mutations,
 
 - Tutors record after each meeting, not on a yearly grid.
 - Dates are **calendar dates** (the day on the form), not timestamps.
-- One active tutor per student (or unassigned on a waitlist).
+- One active tutor per student (or unassigned).
 - One attendance record per student per day, matching one cell on the paper grid.
 - Stopped students leave the tutor’s roster and cannot have attendance edited by that tutor until staff resume tutoring.
 - Staff add students and assign, transfer, and unassign them; they cannot edit achievements, schedules, or stop tutoring.
-- The monthly report lists every student, including those with 0 hours, so waitlist and stopped students are not invisible.
+- The monthly report lists every student, including those with 0 hours, so unassigned and stopped students are not invisible.
 - Hours can be fractional (e.g. 1.5). Completed homework can be included in hours, as the paper form asked.
 - Starred goals are NRS-style outcomes; stored like other goals and labeled with `*`.
 - Fiscal year is July–June.

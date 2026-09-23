@@ -18,7 +18,7 @@ export function NewStudentForm({ tutors }: { tutors: TutorOption[] }) {
       <label className="grid gap-1 text-sm">
         Assign tutor (optional)
         <select name="tutorId" defaultValue="" className="rounded-md border border-line bg-white px-3 py-2">
-          <option value="">Unassigned (waitlist)</option>
+          <option value="">Unassigned</option>
           {tutors.map((tutor) => (
             <option key={tutor.id} value={tutor.id}>
               {tutor.name}
